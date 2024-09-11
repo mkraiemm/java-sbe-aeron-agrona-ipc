@@ -4,6 +4,10 @@ import common.MessagingUtil;
 import io.aeron.Aeron;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.FragmentHandler;
+import model.QuoteDecoder;  // Import SBE Decoder for Quote
+import model.OrderResponseDecoder;  // Import SBE Decoder for OrderResponse
+import org.agrona.DirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -16,6 +20,9 @@ public class DropCopier implements Runnable {
     private final Aeron aeron;
     private final Subscription quoteSubscription;
     private final Subscription orderResponseSubscription;
+    private final UnsafeBuffer buffer = new UnsafeBuffer(new byte[256]);  // Buffer for decoding
+    private final QuoteDecoder quoteDecoder = new QuoteDecoder();  // SBE decoder for Quote
+    private final OrderResponseDecoder orderResponseDecoder = new OrderResponseDecoder();  // SBE decoder for OrderResponse
     private volatile boolean running = true; // Control flag for the run loop
 
     /**
@@ -35,44 +42,58 @@ public class DropCopier implements Runnable {
      */
     @Override
     public void run() {
-        // Handler for processing received messages
-        FragmentHandler handler = (buffer, offset, length, header) -> {
-            String message = buffer.getStringAscii(offset);
-
-            // Extract the timestamp from the message to calculate latency
-            long sentTimestamp = extractSentTimestamp(message);
-            if (sentTimestamp != 0) {
-                long currentTimestamp = System.nanoTime();  // Current time when message is received
-                long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - sentTimestamp);  // Calculate latency in microseconds
-                log("Received: " + message + " | Latency: " + latency + " microseconds");
-            } else {
-                log("Received message without a valid timestamp: " + message);
-            }
-        };
-
         while (running) {
-            quoteSubscription.poll(handler, 10);  // Poll for quotes
-            orderResponseSubscription.poll(handler, 10);  // Poll for order responses
+            quoteSubscription.poll(this::onQuoteReceived, 10);  // Poll for quotes
+            orderResponseSubscription.poll(this::onOrderResponseReceived, 10);  // Poll for order responses
         }
     }
 
     /**
-     * Extracts the sent timestamp from the received message.
-     *
-     * @param message The message from which to extract the timestamp
-     * @return The extracted timestamp or 0 if not found
+     * Handles the received Quote message by decoding it using SBE.
      */
-    private long extractSentTimestamp(String message) {
-        String[] parts = message.split(" ");
-        if (parts.length < 2) return 0;  // Check if there are enough parts to extract the timestamp
+    private void onQuoteReceived(DirectBuffer buffer, int offset, int length, io.aeron.logbuffer.Header header) {
+        // Wrap the buffer and decode the quote message
+        quoteDecoder.wrap(buffer, offset, length, 0);
 
-        try {
-            // Assume the last part of the message is the timestamp (as it was added by the Publisher/Processor)
-            return Long.parseLong(parts[parts.length - 1]);
-        } catch (NumberFormatException e) {
-            log("Invalid timestamp in message: " + message);
-            return 0;  // Return 0 if the timestamp is not a valid number
-        }
+        // Extract fields from the decoded message
+        long publisherId = quoteDecoder.publisherId();
+        long timestamp = quoteDecoder.timestamp();
+        String symbol = String.valueOf((char) quoteDecoder.symbol());
+        float bidPrice = quoteDecoder.bidPrice();
+        int bidSize = quoteDecoder.bidSize();
+        float askPrice = quoteDecoder.askPrice();
+        int askSize = quoteDecoder.askSize();
+        boolean isIndicative = quoteDecoder.isIndicative() == 1;
+
+        // Calculate latency
+        long currentTimestamp = System.nanoTime();
+        long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - timestamp);
+
+        log(String.format("Quote received: Symbol=%s, BidPrice=%.2f, BidSize=%d, AskPrice=%.2f, AskSize=%d, Indicative=%b, Latency=%d microseconds",
+                symbol, bidPrice, bidSize, askPrice, askSize, isIndicative, latency));
+    }
+
+    /**
+     * Handles the received OrderResponse message by decoding it using SBE.
+     */
+    private void onOrderResponseReceived(DirectBuffer buffer, int offset, int length, io.aeron.logbuffer.Header header) {
+        // Wrap the buffer and decode the order response message
+        orderResponseDecoder.wrap(buffer, offset, length, 0);
+
+        // Extract fields from the decoded message
+        long publisherId = orderResponseDecoder.publisherId();
+        long timestamp = orderResponseDecoder.timestamp();
+        float price = orderResponseDecoder.price();
+        int quantity = orderResponseDecoder.quantity();
+        float filledPrice = orderResponseDecoder.filledPrice();
+        int filledQuantity = orderResponseDecoder.filledQuantity();
+
+        // Calculate latency
+        long currentTimestamp = System.nanoTime();
+        long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - timestamp);
+
+        log(String.format("OrderResponse received: Price=%.2f, Quantity=%d, FilledPrice=%.2f, FilledQuantity=%d, Latency=%dµs",
+                price, quantity, filledPrice, filledQuantity, latency));
     }
 
     /**

@@ -36,3 +36,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Ignore Gradle directory
+.gradle/
+
+# Ignore IntelliJ IDEA directory
+.idea/

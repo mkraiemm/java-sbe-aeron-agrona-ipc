@@ -4,6 +4,7 @@ import common.MessagingUtil;
 import io.aeron.Aeron;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.Header;
+import model.QuoteDecoder;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 
@@ -15,6 +16,8 @@ public class Processor implements Runnable {
     private final Aeron aeron;
     private final Subscription quoteSubscription;
     private final int processNumber;
+    private final UnsafeBuffer quoteBuffer = new UnsafeBuffer(new byte[256]); // Buffer for decoding
+    private final QuoteDecoder quoteDecoder = new QuoteDecoder();  // SBE decoder
 
     public Processor(Aeron aeron, int processNumber) {
         this.aeron = aeron;
@@ -31,27 +34,28 @@ public class Processor implements Runnable {
     }
 
     private void onQuoteReceived(DirectBuffer buffer, int offset, int length, Header header) {
-        String quoteMessage = buffer.getStringAscii(offset);
-        String[] parts = quoteMessage.split(" ");
+        // Wrap the buffer with the SBE decoder
+        quoteDecoder.wrap(buffer, offset, length, 0);
 
-        // Extract the timestamp (last part of the message)
-        if (parts.length < 2 || !isNumeric(parts[parts.length - 1])) {
-            log("Invalid quote message format: " + quoteMessage, processNumber);
-            return;  // Skip processing this message
-        }
+        // Extract fields using the decoder
+        long publisherId = quoteDecoder.publisherId();
+        long timestamp = quoteDecoder.timestamp();
+        String symbol = String.valueOf((char) quoteDecoder.symbol());
+        float bidPrice = quoteDecoder.bidPrice();
+        int bidSize = quoteDecoder.bidSize();
+        float askPrice = quoteDecoder.askPrice();
+        int askSize = quoteDecoder.askSize();
+        boolean isIndicative = quoteDecoder.isIndicative() == 1;
 
-        // Get the timestamp when the quote was sent
-        long sentTimestamp = Long.parseLong(parts[parts.length - 1]);
         long currentTimestamp = System.nanoTime();  // Get the current time in nanoseconds
-        long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - sentTimestamp);  // Calculate latency in microseconds
+        long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - timestamp);  // Calculate latency in microseconds
 
-        log("Processed quote: " + quoteMessage + " | Latency: " + latency + " microseconds", processNumber);
+        log("Processed Quote: Symbol=" + symbol +
+                ", BidPrice=" + bidPrice + ", BidSize=" + bidSize +
+                ", AskPrice=" + askPrice + ", AskSize=" + askSize +
+                ", Indicative=" + isIndicative + ", Latency: " + latency + " microseconds", processNumber);
 
         // Continue processing if needed...
-    }
-
-    private boolean isNumeric(String str) {
-        return str != null && str.matches("-?\\d+(\\.\\d+)?");
     }
 
     public static void log(String message, int processNumber) {
