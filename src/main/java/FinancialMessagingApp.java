@@ -34,7 +34,7 @@ import common.MessagingUtil;
                  // Process #1: 3 Publishers and 1 Processor
                  Thread[] publishers = new Thread[3];
                  for (int i = 0; i < 3; i++) {
-                     publishers[i] = new Thread(new Publisher(aeron, i), "Publisher-" + i);
+                     publishers[i] = new Thread(new Publisher   (aeron, i), "Publisher-" + i);
                      publishers[i].start();
                  }
                  Thread processor1 = new Thread(new Processor(aeron, 1), "Processor1");

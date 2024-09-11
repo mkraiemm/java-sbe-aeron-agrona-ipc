@@ -4,10 +4,10 @@ import common.MessagingUtil;
 import io.aeron.Aeron;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.FragmentHandler;
-import model.QuoteDecoder;  // Import SBE Decoder for Quote
-import model.OrderResponseDecoder;  // Import SBE Decoder for OrderResponse
+import model.MessageHeaderDecoder;
+import model.QuoteDecoder;
+import model.OrderResponseDecoder;
 import org.agrona.DirectBuffer;
-import org.agrona.concurrent.UnsafeBuffer;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,7 +20,7 @@ public class DropCopier implements Runnable {
     private final Aeron aeron;
     private final Subscription quoteSubscription;
     private final Subscription orderResponseSubscription;
-    private final UnsafeBuffer buffer = new UnsafeBuffer(new byte[256]);  // Buffer for decoding
+    private final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();  // Message header decoder
     private final QuoteDecoder quoteDecoder = new QuoteDecoder();  // SBE decoder for Quote
     private final OrderResponseDecoder orderResponseDecoder = new OrderResponseDecoder();  // SBE decoder for OrderResponse
     private volatile boolean running = true; // Control flag for the run loop
@@ -42,18 +42,40 @@ public class DropCopier implements Runnable {
      */
     @Override
     public void run() {
+        FragmentHandler fragmentHandler = this::onMessageReceived;
+
         while (running) {
-            quoteSubscription.poll(this::onQuoteReceived, 10);  // Poll for quotes
-            orderResponseSubscription.poll(this::onOrderResponseReceived, 10);  // Poll for order responses
+            quoteSubscription.poll(fragmentHandler, 10);  // Poll for quotes
+            orderResponseSubscription.poll(fragmentHandler, 10);  // Poll for order responses
+        }
+    }
+
+    /**
+     * General message handler that decodes the Message Header and directs the message to the proper decoder.
+     */
+    private void onMessageReceived(DirectBuffer buffer, int offset, int length, io.aeron.logbuffer.Header header) {
+        // Decode the message header first
+        messageHeaderDecoder.wrap(buffer, offset);
+
+        int templateId = messageHeaderDecoder.templateId();
+        offset += messageHeaderDecoder.encodedLength(); // Move offset after the header
+
+        // Determine which message type is being received
+        if (templateId == QuoteDecoder.TEMPLATE_ID) {
+            onQuoteReceived(buffer, offset);
+        } else if (templateId == OrderResponseDecoder.TEMPLATE_ID) {
+            onOrderResponseReceived(buffer, offset);
+        } else {
+            log("Unknown templateId: " + templateId);
         }
     }
 
     /**
      * Handles the received Quote message by decoding it using SBE.
      */
-    private void onQuoteReceived(DirectBuffer buffer, int offset, int length, io.aeron.logbuffer.Header header) {
+    private void onQuoteReceived(DirectBuffer buffer, int offset) {
         // Wrap the buffer and decode the quote message
-        quoteDecoder.wrap(buffer, offset, length, 0);
+        quoteDecoder.wrap(buffer, offset, quoteDecoder.sbeBlockLength(), quoteDecoder.sbeSchemaVersion());
 
         // Extract fields from the decoded message
         long publisherId = quoteDecoder.publisherId();
@@ -76,9 +98,9 @@ public class DropCopier implements Runnable {
     /**
      * Handles the received OrderResponse message by decoding it using SBE.
      */
-    private void onOrderResponseReceived(DirectBuffer buffer, int offset, int length, io.aeron.logbuffer.Header header) {
+    private void onOrderResponseReceived(DirectBuffer buffer, int offset) {
         // Wrap the buffer and decode the order response message
-        orderResponseDecoder.wrap(buffer, offset, length, 0);
+        orderResponseDecoder.wrap(buffer, offset, orderResponseDecoder.sbeBlockLength(), orderResponseDecoder.sbeSchemaVersion());
 
         // Extract fields from the decoded message
         long publisherId = orderResponseDecoder.publisherId();
@@ -92,7 +114,7 @@ public class DropCopier implements Runnable {
         long currentTimestamp = System.nanoTime();
         long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - timestamp);
 
-        log(String.format("OrderResponse received: Price=%.2f, Quantity=%d, FilledPrice=%.2f, FilledQuantity=%d, Latency=%dµs",
+        log(String.format("OrderResponse received: Price=%.2f, Quantity=%d, FilledPrice=%.2f, FilledQuantity=%d, Latency=%d microseconds",
                 price, quantity, filledPrice, filledQuantity, latency));
     }
 

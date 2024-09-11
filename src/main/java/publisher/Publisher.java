@@ -1,15 +1,15 @@
 package publisher;
-
 import common.MessagingUtil;
 import io.aeron.Aeron;
 import io.aeron.Publication;
+import model.MessageHeaderEncoder;  // Import the SBE MessageHeader encoder
 import model.QuoteEncoder;
 import org.agrona.concurrent.UnsafeBuffer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+
+import static processor.Processor.log;
 
 public class Publisher implements Runnable {
     private final Aeron aeron;
@@ -17,7 +17,9 @@ public class Publisher implements Runnable {
     private final int processNumber;
     private final Random random = new Random();
     private UnsafeBuffer quoteBuffer = new UnsafeBuffer(new byte[256]); // Buffer for encoding SBE messages
+    private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder(); // SBE MessageHeader encoder
     private final QuoteEncoder quoteEncoder = new QuoteEncoder();  // SBE encoder
+
 
     public Publisher(Aeron aeron, int processNumber) {
         this.aeron = aeron;
@@ -38,8 +40,16 @@ public class Publisher implements Runnable {
 
             long timestamp = System.nanoTime();  // Capture the current time in nanoseconds
 
-            // Begin encoding the Quote message
-            quoteEncoder.wrap(quoteBuffer, 0); // Wrap buffer at offset 0
+            // Encode message header
+            messageHeaderEncoder.wrap(quoteBuffer, 0)
+                    .blockLength(quoteEncoder.sbeBlockLength())
+                    .templateId(quoteEncoder.sbeTemplateId())
+                    .schemaId(quoteEncoder.sbeSchemaId())
+                    .version(quoteEncoder.sbeSchemaVersion());
+
+            // Begin encoding the Quote message after the header
+            int headerLength = messageHeaderEncoder.encodedLength();
+            quoteEncoder.wrap(quoteBuffer, headerLength); // Wrap buffer after the header
             quoteEncoder.publisherId(processNumber)
                     .timestamp(timestamp)
                     .symbol(symbol.getBytes(StandardCharsets.US_ASCII)[0]) // Use the first byte of the array
@@ -50,7 +60,7 @@ public class Publisher implements Runnable {
                     .askSize(askSize);
 
             // Send the encoded message over Aeron
-            long result = publication.offer(quoteBuffer, 0, quoteEncoder.encodedLength());
+            long result = publication.offer(quoteBuffer, 0, headerLength + quoteEncoder.encodedLength());
             if (result < 0) {
                 log("Failed to send Quote, result: " + result, processNumber);
             } else {
@@ -63,10 +73,5 @@ public class Publisher implements Runnable {
                 Thread.currentThread().interrupt();
             }
         }
-    }
-
-    public static void log(String message, int processNumber) {
-        String timestamp = new SimpleDateFormat("HH:mm:ss.SSS").format(new Date());
-        System.out.printf("[%s] [Publisher-%d] %s%n", timestamp, processNumber, message);
     }
 }
