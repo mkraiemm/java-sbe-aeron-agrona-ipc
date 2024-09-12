@@ -9,6 +9,8 @@ public class MessagingUtil {
 
     public static final int QUOTE_STREAM_ID = 10;
     public static final int ORDER_STREAM_ID = 20;
+    public static final int ORDER_RESPONSE_STREAM_ID = 30;
+
 
     public static final String AERON_DIRECTORY = "src/main/resources/aeron_directory.txt";
 }

@@ -10,7 +10,7 @@ import org.agrona.MutableDirectBuffer;
 @SuppressWarnings("all")
 public final class OrderResponseEncoder
 {
-    public static final int BLOCK_LENGTH = 36;
+    public static final int BLOCK_LENGTH = 42;
     public static final int TEMPLATE_ID = 3;
     public static final int SCHEMA_ID = 91;
     public static final int SCHEMA_VERSION = 0;
@@ -201,9 +201,61 @@ public final class OrderResponseEncoder
     }
 
 
-    public static int sideId()
+    public static int clOrdIdId()
     {
         return 3;
+    }
+
+    public static int clOrdIdSinceVersion()
+    {
+        return 0;
+    }
+
+    public static int clOrdIdEncodingOffset()
+    {
+        return 16;
+    }
+
+    public static int clOrdIdEncodingLength()
+    {
+        return 8;
+    }
+
+    public static String clOrdIdMetaAttribute(final MetaAttribute metaAttribute)
+    {
+        if (MetaAttribute.PRESENCE == metaAttribute)
+        {
+            return "required";
+        }
+
+        return "";
+    }
+
+    public static long clOrdIdNullValue()
+    {
+        return -9223372036854775808L;
+    }
+
+    public static long clOrdIdMinValue()
+    {
+        return -9223372036854775807L;
+    }
+
+    public static long clOrdIdMaxValue()
+    {
+        return 9223372036854775807L;
+    }
+
+    public OrderResponseEncoder clOrdId(final long value)
+    {
+        buffer.putLong(offset + 16, value, BYTE_ORDER);
+        return this;
+    }
+
+
+    public static int sideId()
+    {
+        return 4;
     }
 
     public static int sideSinceVersion()
@@ -213,7 +265,7 @@ public final class OrderResponseEncoder
 
     public static int sideEncodingOffset()
     {
-        return 16;
+        return 24;
     }
 
     public static int sideEncodingLength()
@@ -248,14 +300,14 @@ public final class OrderResponseEncoder
 
     public OrderResponseEncoder side(final byte value)
     {
-        buffer.putByte(offset + 16, value);
+        buffer.putByte(offset + 24, value);
         return this;
     }
 
 
     public static int quantityId()
     {
-        return 4;
+        return 5;
     }
 
     public static int quantitySinceVersion()
@@ -265,7 +317,7 @@ public final class OrderResponseEncoder
 
     public static int quantityEncodingOffset()
     {
-        return 17;
+        return 25;
     }
 
     public static int quantityEncodingLength()
@@ -300,14 +352,14 @@ public final class OrderResponseEncoder
 
     public OrderResponseEncoder quantity(final int value)
     {
-        buffer.putInt(offset + 17, value, BYTE_ORDER);
+        buffer.putInt(offset + 25, value, BYTE_ORDER);
         return this;
     }
 
 
     public static int priceId()
     {
-        return 5;
+        return 6;
     }
 
     public static int priceSinceVersion()
@@ -317,7 +369,7 @@ public final class OrderResponseEncoder
 
     public static int priceEncodingOffset()
     {
-        return 21;
+        return 29;
     }
 
     public static int priceEncodingLength()
@@ -352,14 +404,14 @@ public final class OrderResponseEncoder
 
     public OrderResponseEncoder price(final float value)
     {
-        buffer.putFloat(offset + 21, value, BYTE_ORDER);
+        buffer.putFloat(offset + 29, value, BYTE_ORDER);
         return this;
     }
 
 
     public static int filledQuantityId()
     {
-        return 6;
+        return 7;
     }
 
     public static int filledQuantitySinceVersion()
@@ -369,7 +421,7 @@ public final class OrderResponseEncoder
 
     public static int filledQuantityEncodingOffset()
     {
-        return 25;
+        return 33;
     }
 
     public static int filledQuantityEncodingLength()
@@ -404,14 +456,14 @@ public final class OrderResponseEncoder
 
     public OrderResponseEncoder filledQuantity(final int value)
     {
-        buffer.putInt(offset + 25, value, BYTE_ORDER);
+        buffer.putInt(offset + 33, value, BYTE_ORDER);
         return this;
     }
 
 
     public static int filledPriceId()
     {
-        return 7;
+        return 8;
     }
 
     public static int filledPriceSinceVersion()
@@ -421,7 +473,7 @@ public final class OrderResponseEncoder
 
     public static int filledPriceEncodingOffset()
     {
-        return 29;
+        return 37;
     }
 
     public static int filledPriceEncodingLength()
@@ -456,7 +508,59 @@ public final class OrderResponseEncoder
 
     public OrderResponseEncoder filledPrice(final float value)
     {
-        buffer.putFloat(offset + 29, value, BYTE_ORDER);
+        buffer.putFloat(offset + 37, value, BYTE_ORDER);
+        return this;
+    }
+
+
+    public static int statusId()
+    {
+        return 9;
+    }
+
+    public static int statusSinceVersion()
+    {
+        return 0;
+    }
+
+    public static int statusEncodingOffset()
+    {
+        return 41;
+    }
+
+    public static int statusEncodingLength()
+    {
+        return 1;
+    }
+
+    public static String statusMetaAttribute(final MetaAttribute metaAttribute)
+    {
+        if (MetaAttribute.PRESENCE == metaAttribute)
+        {
+            return "required";
+        }
+
+        return "";
+    }
+
+    public static byte statusNullValue()
+    {
+        return (byte)0;
+    }
+
+    public static byte statusMinValue()
+    {
+        return (byte)32;
+    }
+
+    public static byte statusMaxValue()
+    {
+        return (byte)126;
+    }
+
+    public OrderResponseEncoder status(final byte value)
+    {
+        buffer.putByte(offset + 41, value);
         return this;
     }
 

@@ -91,8 +91,8 @@ public class DropCopier implements Runnable {
         long currentTimestamp = System.nanoTime();
         long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - timestamp);
 
-        log(String.format("Quote received: Symbol=%s, BidPrice=%.2f, BidSize=%d, AskPrice=%.2f, AskSize=%d, Indicative=%b, Latency=%d microseconds",
-                symbol, bidPrice, bidSize, askPrice, askSize, isIndicative, latency));
+        log(String.format("Quote received: PublisherId=%d, Symbol=%s, BidPrice=%.2f, BidSize=%d, AskPrice=%.2f, AskSize=%d, Indicative=%b, Latency=%d microseconds",
+                publisherId, symbol, bidPrice, bidSize, askPrice, askSize, isIndicative, latency));
     }
 
     /**
@@ -103,19 +103,17 @@ public class DropCopier implements Runnable {
         orderResponseDecoder.wrap(buffer, offset, orderResponseDecoder.sbeBlockLength(), orderResponseDecoder.sbeSchemaVersion());
 
         // Extract fields from the decoded message
-        long publisherId = orderResponseDecoder.publisherId();
-        long timestamp = orderResponseDecoder.timestamp();
-        float price = orderResponseDecoder.price();
-        int quantity = orderResponseDecoder.quantity();
-        float filledPrice = orderResponseDecoder.filledPrice();
+        long clOrdId = orderResponseDecoder.clOrdId();
+        byte status = orderResponseDecoder.status();
         int filledQuantity = orderResponseDecoder.filledQuantity();
+        float filledPrice = orderResponseDecoder.filledPrice();
 
         // Calculate latency
         long currentTimestamp = System.nanoTime();
-        long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - timestamp);
+        long latency = TimeUnit.NANOSECONDS.toMicros(currentTimestamp - orderResponseDecoder.timestamp());
 
-        log(String.format("OrderResponse received: Price=%.2f, Quantity=%d, FilledPrice=%.2f, FilledQuantity=%d, Latency=%d microseconds",
-                price, quantity, filledPrice, filledQuantity, latency));
+        log(String.format("OrderResponse received: ClOrdId=%d, Status=%c, FilledQuantity=%d, FilledPrice=%.2f, Latency=%d microseconds",
+                clOrdId, (char) status, filledQuantity, filledPrice, latency));
     }
 
     /**

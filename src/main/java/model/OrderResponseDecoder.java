@@ -10,7 +10,7 @@ import org.agrona.DirectBuffer;
 @SuppressWarnings("all")
 public final class OrderResponseDecoder
 {
-    public static final int BLOCK_LENGTH = 36;
+    public static final int BLOCK_LENGTH = 42;
     public static final int TEMPLATE_ID = 3;
     public static final int SCHEMA_ID = 91;
     public static final int SCHEMA_VERSION = 0;
@@ -234,9 +234,60 @@ public final class OrderResponseDecoder
     }
 
 
-    public static int sideId()
+    public static int clOrdIdId()
     {
         return 3;
+    }
+
+    public static int clOrdIdSinceVersion()
+    {
+        return 0;
+    }
+
+    public static int clOrdIdEncodingOffset()
+    {
+        return 16;
+    }
+
+    public static int clOrdIdEncodingLength()
+    {
+        return 8;
+    }
+
+    public static String clOrdIdMetaAttribute(final MetaAttribute metaAttribute)
+    {
+        if (MetaAttribute.PRESENCE == metaAttribute)
+        {
+            return "required";
+        }
+
+        return "";
+    }
+
+    public static long clOrdIdNullValue()
+    {
+        return -9223372036854775808L;
+    }
+
+    public static long clOrdIdMinValue()
+    {
+        return -9223372036854775807L;
+    }
+
+    public static long clOrdIdMaxValue()
+    {
+        return 9223372036854775807L;
+    }
+
+    public long clOrdId()
+    {
+        return buffer.getLong(offset + 16, BYTE_ORDER);
+    }
+
+
+    public static int sideId()
+    {
+        return 4;
     }
 
     public static int sideSinceVersion()
@@ -246,7 +297,7 @@ public final class OrderResponseDecoder
 
     public static int sideEncodingOffset()
     {
-        return 16;
+        return 24;
     }
 
     public static int sideEncodingLength()
@@ -281,13 +332,13 @@ public final class OrderResponseDecoder
 
     public byte side()
     {
-        return buffer.getByte(offset + 16);
+        return buffer.getByte(offset + 24);
     }
 
 
     public static int quantityId()
     {
-        return 4;
+        return 5;
     }
 
     public static int quantitySinceVersion()
@@ -297,7 +348,7 @@ public final class OrderResponseDecoder
 
     public static int quantityEncodingOffset()
     {
-        return 17;
+        return 25;
     }
 
     public static int quantityEncodingLength()
@@ -332,13 +383,13 @@ public final class OrderResponseDecoder
 
     public int quantity()
     {
-        return buffer.getInt(offset + 17, BYTE_ORDER);
+        return buffer.getInt(offset + 25, BYTE_ORDER);
     }
 
 
     public static int priceId()
     {
-        return 5;
+        return 6;
     }
 
     public static int priceSinceVersion()
@@ -348,7 +399,7 @@ public final class OrderResponseDecoder
 
     public static int priceEncodingOffset()
     {
-        return 21;
+        return 29;
     }
 
     public static int priceEncodingLength()
@@ -383,13 +434,13 @@ public final class OrderResponseDecoder
 
     public float price()
     {
-        return buffer.getFloat(offset + 21, BYTE_ORDER);
+        return buffer.getFloat(offset + 29, BYTE_ORDER);
     }
 
 
     public static int filledQuantityId()
     {
-        return 6;
+        return 7;
     }
 
     public static int filledQuantitySinceVersion()
@@ -399,7 +450,7 @@ public final class OrderResponseDecoder
 
     public static int filledQuantityEncodingOffset()
     {
-        return 25;
+        return 33;
     }
 
     public static int filledQuantityEncodingLength()
@@ -434,13 +485,13 @@ public final class OrderResponseDecoder
 
     public int filledQuantity()
     {
-        return buffer.getInt(offset + 25, BYTE_ORDER);
+        return buffer.getInt(offset + 33, BYTE_ORDER);
     }
 
 
     public static int filledPriceId()
     {
-        return 7;
+        return 8;
     }
 
     public static int filledPriceSinceVersion()
@@ -450,7 +501,7 @@ public final class OrderResponseDecoder
 
     public static int filledPriceEncodingOffset()
     {
-        return 29;
+        return 37;
     }
 
     public static int filledPriceEncodingLength()
@@ -485,7 +536,58 @@ public final class OrderResponseDecoder
 
     public float filledPrice()
     {
-        return buffer.getFloat(offset + 29, BYTE_ORDER);
+        return buffer.getFloat(offset + 37, BYTE_ORDER);
+    }
+
+
+    public static int statusId()
+    {
+        return 9;
+    }
+
+    public static int statusSinceVersion()
+    {
+        return 0;
+    }
+
+    public static int statusEncodingOffset()
+    {
+        return 41;
+    }
+
+    public static int statusEncodingLength()
+    {
+        return 1;
+    }
+
+    public static String statusMetaAttribute(final MetaAttribute metaAttribute)
+    {
+        if (MetaAttribute.PRESENCE == metaAttribute)
+        {
+            return "required";
+        }
+
+        return "";
+    }
+
+    public static byte statusNullValue()
+    {
+        return (byte)0;
+    }
+
+    public static byte statusMinValue()
+    {
+        return (byte)32;
+    }
+
+    public static byte statusMaxValue()
+    {
+        return (byte)126;
+    }
+
+    public byte status()
+    {
+        return buffer.getByte(offset + 41);
     }
 
 
@@ -536,6 +638,9 @@ public final class OrderResponseDecoder
         builder.append("timestamp=");
         builder.append(this.timestamp());
         builder.append('|');
+        builder.append("clOrdId=");
+        builder.append(this.clOrdId());
+        builder.append('|');
         builder.append("side=");
         builder.append(this.side());
         builder.append('|');
@@ -550,6 +655,9 @@ public final class OrderResponseDecoder
         builder.append('|');
         builder.append("filledPrice=");
         builder.append(this.filledPrice());
+        builder.append('|');
+        builder.append("status=");
+        builder.append(this.status());
 
         limit(originalLimit);
 
