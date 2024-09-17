@@ -38,20 +38,29 @@ public class Processor implements Runnable {
 
     @Override
     public void run() {
+        long lastOrderTime = System.nanoTime();
+        final long orderIntervalNs = TimeUnit.MILLISECONDS.toNanos(100);
+
         while (!Thread.currentThread().isInterrupted()) {
-            quoteSubscription.poll(this::onQuoteReceived, 100);  // Poll for quotes
-            orderResponseSubscription.poll(this::onOrderResponseReceived, 100);  // Poll for OrderResponses
+            // Continuously poll for incoming messages
+            int quoteFragments = quoteSubscription.poll(this::onQuoteReceived, 10);
+            int orderResponseFragments = orderResponseSubscription.poll(this::onOrderResponseReceived, 10);
 
-            // Send an Order to the Publishers
-            sendOrder();
+            // Send an order at regular intervals without blocking message processing
+            long now = System.nanoTime();
+            if (now - lastOrderTime >= orderIntervalNs) {
+                sendOrder();
+                lastOrderTime = now;
+            }
 
-            try {
-                Thread.sleep(100);  // Simulate periodic order sending
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            // Use an idle strategy to prevent busy spinning when no messages are received
+            if (quoteFragments == 0 && orderResponseFragments == 0) {
+                // Optionally, implement a more sophisticated idle strategy here
+                Thread.yield();
             }
         }
     }
+
 
     private void sendOrder() {
         long clOrdId = ThreadLocalRandom.current().nextLong(1000, 10000);  // Generate a random client order ID
