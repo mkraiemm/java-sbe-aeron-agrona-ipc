@@ -9,7 +9,7 @@ public final class MessageHeaderDecoder
     public static final int SCHEMA_ID = 91;
     public static final int SCHEMA_VERSION = 0;
     public static final String SEMANTIC_VERSION = "";
-    public static final int ENCODED_LENGTH = 12;
+    public static final int ENCODED_LENGTH = 8;
     public static final java.nio.ByteOrder BYTE_ORDER = java.nio.ByteOrder.LITTLE_ENDIAN;
 
     private int offset;
@@ -195,78 +195,6 @@ public final class MessageHeaderDecoder
     }
 
 
-    public static int numGroupsEncodingOffset()
-    {
-        return 8;
-    }
-
-    public static int numGroupsEncodingLength()
-    {
-        return 2;
-    }
-
-    public static int numGroupsSinceVersion()
-    {
-        return 0;
-    }
-
-    public static int numGroupsNullValue()
-    {
-        return 65535;
-    }
-
-    public static int numGroupsMinValue()
-    {
-        return 0;
-    }
-
-    public static int numGroupsMaxValue()
-    {
-        return 65534;
-    }
-
-    public int numGroups()
-    {
-        return (buffer.getShort(offset + 8, BYTE_ORDER) & 0xFFFF);
-    }
-
-
-    public static int numVarDataFieldsEncodingOffset()
-    {
-        return 10;
-    }
-
-    public static int numVarDataFieldsEncodingLength()
-    {
-        return 2;
-    }
-
-    public static int numVarDataFieldsSinceVersion()
-    {
-        return 0;
-    }
-
-    public static int numVarDataFieldsNullValue()
-    {
-        return 65535;
-    }
-
-    public static int numVarDataFieldsMinValue()
-    {
-        return 0;
-    }
-
-    public static int numVarDataFieldsMaxValue()
-    {
-        return 65534;
-    }
-
-    public int numVarDataFields()
-    {
-        return (buffer.getShort(offset + 10, BYTE_ORDER) & 0xFFFF);
-    }
-
-
     public String toString()
     {
         if (null == buffer)
@@ -296,12 +224,6 @@ public final class MessageHeaderDecoder
         builder.append('|');
         builder.append("version=");
         builder.append(this.version());
-        builder.append('|');
-        builder.append("numGroups=");
-        builder.append(this.numGroups());
-        builder.append('|');
-        builder.append("numVarDataFields=");
-        builder.append(this.numVarDataFields());
         builder.append(')');
 
         return builder;

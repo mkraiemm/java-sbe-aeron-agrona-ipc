@@ -10,7 +10,7 @@ import org.agrona.MutableDirectBuffer;
 @SuppressWarnings("all")
 public final class OrderEncoder
 {
-    public static final int BLOCK_LENGTH = 36;
+    public static final int BLOCK_LENGTH = 34;
     public static final int TEMPLATE_ID = 2;
     public static final int SCHEMA_ID = 91;
     public static final int SCHEMA_VERSION = 0;

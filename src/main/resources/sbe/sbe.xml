@@ -1,51 +1,54 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<messageSchema xmlns:sbe="http://fixprotocol.io/2017/sbe" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" package="Examples" id="91" version="0" byteOrder="littleEndian" xsi:schemaLocation="http://fixprotocol.io/2017/sbe sbe-2.0rc2.xsd">
-        <!-- Correctly formatted Message Header Definition -->
-       <types>
-           <composite name="messageHeader">
-               <type name="blockLength" primitiveType="uint16"/>
-               <type name="templateId" primitiveType="uint16"/>
-               <type name="schemaId" primitiveType="uint16"/>
-               <type name="version" primitiveType="uint16"/>
-               <type name="numGroups" primitiveType="uint16"/>
-               <type name="numVarDataFields" primitiveType="uint16"/>
-           </composite>
-       </types>
+<messageSchema xmlns:sbe="http://fixprotocol.io/2017/sbe"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               package="Examples"
+               id="91"
+               version="0"
+               byteOrder="littleEndian"
+               xsi:schemaLocation="http://fixprotocol.io/2017/sbe sbe-2.0rc2.xsd">
+    <!-- Message Header Definition -->
+    <types>
+        <composite name="messageHeader">
+            <type name="blockLength" primitiveType="uint16"/>
+            <type name="templateId" primitiveType="uint16"/>
+            <type name="schemaId" primitiveType="uint16"/>
+            <type name="version" primitiveType="uint16"/>
+        </composite>
+    </types>
 
-        <!-- Quote Message -->
-        <sbe:message name="Quote" id="1" blockLength="36" description="Market Quote">
-            <field name="publisherId" id="1" type="int64" />
-            <field name="timestamp" id="2" type="int64" />
-            <field name="symbol" id="3" type="char" length="75" />
-            <field name="isIndicative" id="4" type="uint8" />
-            <field name="bidSize" id="5" type="int32" />
-            <field name="bidPrice" id="6" type="float" />
-            <field name="askPrice" id="7" type="float" />
-            <field name="askSize" id="8" type="int32" />
-        </sbe:message>
-
-        <!-- Order Message -->
-        <sbe:message name="Order" id="2" blockLength="36" description="Market Order">
-            <field name="publisherId" id="1" type="int64" />
-            <field name="timestamp" id="2" type="int64" />
-            <field name="clOrdId" id="3" type="int64" />
-            <field name="side" id="4" type="char" length="1" />
-            <field name="quantity" id="5" type="int32" />
-            <field name="price" id="6" type="float" />
-            <field name="timeInForce" id="7" type="char" length="1" />
-        </sbe:message>
-
-        <!-- Order Response Message -->
-    <sbe:message name="OrderResponse" id="3" blockLength="42" description="Order Response">
-        <field name="publisherId" id="1" type="int64" />
-        <field name="timestamp" id="2" type="int64" />
-        <field name="clOrdId" id="3" type="int64" /> <!-- clOrdId added here -->
-        <field name="side" id="4" type="char" length="1" />
-        <field name="quantity" id="5" type="int32" />
-        <field name="price" id="6" type="float" />
-        <field name="filledQuantity" id="7" type="int32" />
-        <field name="filledPrice" id="8" type="float" />
-        <field name="status" id="9" type="char" length="1" />
+    <!-- Quote Message -->
+    <sbe:message name="Quote" id="1" description="Market Quote">
+        <field name="publisherId" id="1" type="int64"/>
+        <field name="timestamp" id="2" type="int64"/>
+        <field name="symbol" id="3" type="char" length="75"/>
+        <field name="isIndicative" id="4" type="uint8"/>
+        <field name="bidSize" id="5" type="int32"/>
+        <field name="bidPrice" id="6" type="float"/>
+        <field name="askPrice" id="7" type="float"/>
+        <field name="askSize" id="8" type="int32"/>
     </sbe:message>
 
-    </messageSchema>
+    <!-- Order Message -->
+    <sbe:message name="Order" id="2" description="Market Order">
+        <field name="publisherId" id="1" type="int64"/>
+        <field name="timestamp" id="2" type="int64"/>
+        <field name="clOrdId" id="3" type="int64"/>
+        <field name="side" id="4" type="char" length="1"/>
+        <field name="quantity" id="5" type="int32"/>
+        <field name="price" id="6" type="float"/>
+        <field name="timeInForce" id="7" type="char" length="1"/>
+    </sbe:message>
+
+    <!-- Order Response Message -->
+    <sbe:message name="OrderResponse" id="3" description="Order Response">
+        <field name="publisherId" id="1" type="int64"/>
+        <field name="timestamp" id="2" type="int64"/>
+        <field name="clOrdId" id="3" type="int64"/>
+        <field name="side" id="4" type="char" length="1"/>
+        <field name="quantity" id="5" type="int32"/>
+        <field name="price" id="6" type="float"/>
+        <field name="filledQuantity" id="7" type="int32"/>
+        <field name="filledPrice" id="8" type="float"/>
+        <field name="status" id="9" type="char" length="1"/>
+    </sbe:message>
+</messageSchema>

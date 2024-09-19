@@ -1,25 +1,16 @@
 package common;
 
-
 import org.agrona.concurrent.IdGenerator;
+import java.util.concurrent.atomic.AtomicLong;
 
-/** 
- * ConcreteIdGenerator implements the IdGenerator interface
+/**
+ * ConcreteIdGenerator generates unique IDs using an AtomicLong counter.
  */
 public class ConcreteIdGenerator implements IdGenerator {
-    // Create an instance of IdGenerator to generate IDs
-    private final IdGenerator idGenerator = new IdGenerator() {
-        @Override
-        public long nextId() {
-            // Generate a new ID based on the current system time in milliseconds
-            return System.currentTimeMillis();
-        }
-    };
+    private final AtomicLong counter = new AtomicLong();
 
-    // Override the nextId method to provide ID generation
     @Override
     public long nextId() {
-        // Generate a new ID based on the current system time in milliseconds
-        return System.currentTimeMillis();
+        return counter.incrementAndGet();
     }
 }
